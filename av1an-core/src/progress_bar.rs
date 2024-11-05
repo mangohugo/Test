@@ -17,19 +17,17 @@ const PROGRESS_CHARS: &str = if cfg!(windows) {
 };
 
 const INDICATIF_PROGRESS_TEMPLATE: &str = if cfg!(windows) {
-  // Do not use a spinner on Windows since the default console cannot display
-  // the characters used for the spinner
-  "{elapsed_precise:.bold} ▐{wide_bar:.blue/white.dim}▌ {percent:.bold} {pos} ({fps:.bold}, eta {fixed_eta}{msg})"
+  // Keine Spinner auf Windows, daher ein einfacheres Design
+  "{elapsed_precise:.bold.cyan} ▐{wide_bar:.cyan/white.dim}▌ {percent:.bold.cyan} {pos:.cyan} ({fps:.bold.cyan}, eta {fixed_eta:.cyan}{msg:.cyan})"
 } else {
-  "{spinner:.green.bold} {elapsed_precise:.bold} ▕{wide_bar:.blue/white.dim}▏ {percent:.bold}  {pos} ({fps:.bold}, eta {fixed_eta}{msg})"
+  "{spinner:.cyan.bold} {elapsed_precise:.bold.cyan} ▕{wide_bar:.cyan/white.dim}▏ {percent:.bold.cyan} {pos:.cyan} ({fps:.bold.cyan}, eta {fixed_eta:.cyan}{msg:.cyan})"
 };
 
 const INDICATIF_SPINNER_TEMPLATE: &str = if cfg!(windows) {
-  // Do not use a spinner on Windows since the default console cannot display
-  // the characters used for the spinner
-  "{elapsed_precise:.bold} [{wide_bar:.blue/white.dim}]  {pos} frames ({fps:.bold})"
+  // Kein Spinner auf Windows, daher ein einfacheres Design
+  "{elapsed_precise:.bold.cyan} [{wide_bar:.cyan/white.dim}] {pos:.cyan} frames ({fps:.bold.cyan})"
 } else {
-  "{spinner:.green.bold} {elapsed_precise:.bold} [{wide_bar:.blue/white.dim}]  {pos} frames ({fps:.bold})"
+  "{spinner:.cyan.bold} {elapsed_precise:.bold.cyan} [{wide_bar:.cyan/white.dim}] {pos:.cyan} frames ({fps:.bold.cyan})"
 };
 
 static PROGRESS_BAR: OnceCell<ProgressBar> = OnceCell::new();
@@ -255,15 +253,19 @@ pub fn init_multi_progress_bar(len: u64, workers: usize, total_chunks: usize, re
   });
 }
 
+const CYAN_START: &str = "\x1b[36m";  // ANSI-Code für Cyan
+const RESET: &str = "\x1b[0m";         // ANSI-Code zum Zurücksetzen
+
 pub fn update_mp_chunk(worker_idx: usize, chunk: usize, padding: usize) {
   if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
-    pbs[worker_idx].set_prefix(format!("[Chunk {chunk:>padding$}]"));
+    let cyan_prefix = format!("{CYAN_START}[Chunk {chunk:>padding$}]{RESET}");
+    pbs[worker_idx].set_prefix(cyan_prefix);
   }
 }
 
 pub fn update_mp_msg(worker_idx: usize, msg: String) {
   if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
-    pbs[worker_idx].set_message(msg);
+    pbs[worker_idx].set_message(format!("{}{}{}", CYAN_START, msg, RESET));
   }
 }
 
@@ -273,12 +275,9 @@ pub fn inc_mp_bar(inc: u64) {
   }
 }
 
-pub fn update_mp_bar_info(kbps: f64, est_size: HumanBytes) {
-  if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
-    pbs
-      .last()
-      .unwrap()
-      .set_message(format!(", {kbps:.1} Kbps, est. {est_size}"));
+pub fn update_bar_info(kbps: f64, est_size: HumanBytes) {
+  if let Some(pb) = PROGRESS_BAR.get() {
+    pb.set_message(format!("{}{}, {kbps:.1} Kbps, est. {est_size}{}", CYAN_START, RESET));
   }
 }
 
