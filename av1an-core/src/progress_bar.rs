@@ -253,19 +253,15 @@ pub fn init_multi_progress_bar(len: u64, workers: usize, total_chunks: usize, re
   });
 }
 
-const CYAN_START: &str = "\x1b[36m";  // ANSI-Code für Cyan
-const RESET: &str = "\x1b[0m";         // ANSI-Code zum Zurücksetzen
-
 pub fn update_mp_chunk(worker_idx: usize, chunk: usize, padding: usize) {
   if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
-    let cyan_prefix = format!("{CYAN_START}[Chunk {chunk:>padding$}]{RESET}");
-    pbs[worker_idx].set_prefix(cyan_prefix);
+    pbs[worker_idx].set_prefix(format!("[Chunk {chunk:>padding$}]"));
   }
 }
 
 pub fn update_mp_msg(worker_idx: usize, msg: String) {
   if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
-    pbs[worker_idx].set_message(format!("{}{}{}", CYAN_START, msg, RESET));
+    pbs[worker_idx].set_message(msg);
   }
 }
 
@@ -275,9 +271,12 @@ pub fn inc_mp_bar(inc: u64) {
   }
 }
 
-pub fn update_bar_info(kbps: f64, est_size: HumanBytes) {
-  if let Some(pb) = PROGRESS_BAR.get() {
-    pb.set_message(format!("{}{}, {kbps:.1} Kbps, est. {est_size}{}", CYAN_START, RESET));
+pub fn update_mp_bar_info(kbps: f64, est_size: HumanBytes) {
+  if let Some((_, pbs)) = MULTI_PROGRESS_BAR.get() {
+    pbs
+      .last()
+      .unwrap()
+      .set_message(format!(", {kbps:.1} Kbps, est. {est_size}"));
   }
 }
 
