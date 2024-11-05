@@ -11,7 +11,7 @@ use crate::util::printable_base10_digits;
 use crate::{get_done, Verbosity};
 
 const PROGRESS_CHARS: &str = if cfg!(windows) {
-  "◼◼◼◧▭▭"
+  "◼◼◼◧    "
 } else {
   "█▓▒░  "
 };
